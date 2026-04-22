@@ -22,453 +22,462 @@
 
 ----
 
-# 🚀 ColdBox 8 BoxLang Application Template
+# ⚡ ColdBox BoxLang Desktop App Template
 
-Welcome to the modern ColdBox 8 BoxLang application template! 🎉 This template provides a solid foundation for building enterprise-grade HMVC (Hierarchical Model-View-Controller) web applications using the BoxLang runtime. Perfect for developers looking to leverage the power of ColdBox with the performance and modern features of BoxLang.
+Production-ready desktop application template built with ColdBox, BoxLang MiniServer, Electron, Vite, Alpine.js, and Bootstrap.
 
-## ⚙️ Requirements
+This template gives you a full desktop shell around a local BoxLang web application. Electron owns the native desktop lifecycle, while BoxLang MiniServer serves the app locally and the BrowserWindow loads it like a native desktop experience.
 
-Before getting started, ensure you have the following installed on your operating system:
+## What This Template Gives You
 
-1. **BoxLang OS** - Operating System Binary
-   - 📥 Installation: <https://boxlang.ortusbooks.com/getting-started/installation>
-   - 📌 Minimum Version: 1.6+
-   - 🎯 Used for: running BoxLang CLI applications and scripts at the operating system level
-2. **CommandBox** - CLI toolchain, package manager, and server runtime
-   - 📥 Installation: <https://commandbox.ortusbooks.com/setup/installation>
-   - 📌 Minimum Version: 6.0+
-   - 🎯 Used for: dependency management, server starting, testing, and task automation
-3. **Maven** - Java dependency manager *(Optional, only if you need Java dependencies)*
-   - 📥 Installation: <https://maven.apache.org/install.html>
-   - 📌 Minimum Version: 3.6+
-   - 🎯 Used for: managing Java dependencies if your project requires them
+- ColdBox application structure inside a desktop runtime
+- Electron shell with window lifecycle, menu, tray, and shortcuts
+- Local BoxLang MiniServer process managed by Electron
+- Vite build pipeline for JS and SCSS assets
+- Electron Forge packaging for macOS, Windows, and Linux
+- Packaged MiniServer runtime under `runtime/bin` and `runtime/lib`
+- Development and production runtime config split via `.boxlang-dev.json` and `.boxlang.json`
 
+## Project Structure
 
-## ⚡ Quick Installation
+```text
+app/
+  config/
+  electron/
+  handlers/
+  interceptors/
+  layouts/
+  models/          (includes ViteHelper.bx)
+  modules/
+  views/
 
-In order to work with this template, you need to have [CommandBox](https://www.ortussolutions.com/products/commandbox) and the [BoxLang](https://boxlang.ortusbooks.com/) operating system runtime installed on your machine.  CommandBox is the application server of choice for BoxLang applications.  Please note that running BoxLang web applications is different than the BoxLang OS runtime.  The BoxLang OS runtime is used to run BoxLang scripts and command line applications, while CommandBox is used to run web applications.
+public/
+  Application.bx
+  index.bxm
+  includes/
+
+resources/
+  assets/
+    fonts/
+    js/
+    scss/
+
+runtime/
+  Package.bx
+  VERSION
+  bin/
+  lib/
+  modules/
+
+miniserver.json
+forge.config.cjs
+vite.config.mjs
+```
+
+## Architecture
+
+### Runtime Model
+
+1. Electron starts from `app/electron/Main.js`
+2. `Main.js` wires the desktop modules
+3. `app/electron/BoxLang.js` starts BoxLang MiniServer using `miniserver.json`
+4. MiniServer loads the ColdBox app from `public/`
+5. Electron waits for the local URL to become ready, then loads it in a `BrowserWindow`
+
+### Main Files
+
+- `app/electron/Main.js`: Electron bootstrap and module wiring
+- `app/electron/BoxLang.js`: MiniServer process management, readiness checks, restart strategy
+- `app/electron/AppMenu.js`: app menu
+- `app/electron/TrayMenu.js`: tray integration
+- `app/electron/Shortcuts.js`: global keyboard shortcuts
+- `app/config/Coldbox.bx`: ColdBox configuration
+- `app/config/Router.bx`: routes
+- `public/Application.bx`: web-facing bootstrap
+- `public/index.bxm`: default entry point
+- `miniserver.json`: MiniServer host, port, web root, and dev runtime config
+- `runtime/Package.bx`: MiniServer runtime packager
+- `vite.config.mjs`: frontend asset build config
+- `forge.config.cjs`: Electron Forge packaging config
+
+## Requirements
+
+- BoxLang OS runtime
+- CommandBox
+- Node.js
+- Java 21+
+
+Important: This template packages the BoxLang MiniServer runtime, but it does not package a JRE/JDK. Java 21+ must already be available on the host machine.
+
+## Quick Start
+
+### Install Dependencies
 
 ```bash
-# Create a new ColdBox application using this BoxLang template
-box coldbox create app --boxlang
-# Start up the web server
-box server start
+box install
+npm install
 ```
 
-Your application will be available at `http://localhost:8080` 🌐
-
-Code to your liking and enjoy! 🎊
-
-## 📁Application Structure
-
-This ColdBox 8 application follows a clean, modern architecture with the following structure:
-
-### 🏗️ ColdBox Application (`/app/`)
-
-This folder contains the main ColdBox application code via conventions, including configuration files, event handlers, models, views, and more.  This is where you will be coding most of your application logic.
-
-```text
-🏗️ app/
-├── 🔧 config/                # Configuration files (Optional)
-│   ├── CacheBox.bx           # Caching configuration
-│   ├── ColdBox.bx            # Main framework settings
-│   ├── Router.bx             # URL routing definitions
-│   ├── Scheduler.bx          # Task scheduling
-│   └── WireBox.bx            # Dependency injection
-├── 🎮 handlers/              # Event handlers (controllers)
-├── 🛠️ helpers/               # Application helpers (Optional)
-├── 🎨 layouts/               # View layouts
-├── 📝 logs/                  # ColdBox logs (Optional)
-├── 🏗️ models/                # Business logic models
-├── 📦 modules/           # Application-specific modules (Optional)
-└── 👁️ views/                 # View templates
-```
-
-### 🌐 Public Web Root (`/public/`)
-
-This folder contains all the publicly accessible assets and the main application entry point.  The CommandBox or MiniServer or Whatever server will point to this folder as the web root.
-
-```text
-public/
-├── 📱 Application.bx         # Web-facing application Bootstrap
-├── 🎯 index.bxm              # Main entry point (Empty)
-├── 🖼️ favicon.ico            # Site icon
-├── 🤖 robots.txt             # Simplified search engine directives (modern crawlers require minimal rules)
-└── 📦 includes/              # CSS, JS, images or any resources you want
-```
-
-### 🔧 Configuration & Build
-
-Here is a top-down view of the main configuration and build files:
-
-```text
-├── 🥊 box.json               # CommandBox dependencies and project descriptor
-├── ☕︎ pom.xml                 # Maven dependencies (Optional)
-├── 🖥️ server.json            # CommandBox Server configuration
-├── 🏗️ app/                   # Your Application Code
-├── 📦 lib/                   # Application Dependencies
-│   ├── coldbox/              # ColdBox (Managed by CommandBox)
-│   ├── testbox/              # TestBox (Managed by CommandBox)
-│   ├── java/                 # Java JAR dependencies (Managed by Maven)
-│   └── modules/              # ColdBox Modules(Managed by CommandBox)
-├── ⚙️ runtime/               # BoxLang runtime environment overrides and resources
-│   ├── 🔧 boxlang.json       # Custom BoxLang configuration overrides
-│   ├── global/               # BoxLang Global Assets (Optional)
-│   │   ├── classes/          # Global BoxLang classes
-│   │   └── components/       # Global BoxLang components
-│   └── logs/                 # BoxLang logs
-├── 📚 resources/             # ColdBox/CommandBox module resources
-│    ├── 💽 migrations/          # Database migrations (cbmigrations)
-│.   ├── 🐳 docker/                # Docker configuration (Optional)
-│    ├── 🌱 seeders/             # Database seeders
-│    ├── 🌐 swagger/             # API documentation (cbswagger)
-│    └── 👨‍💻 other/               # Various module-specific resources
-└── 🧪 tests/                 # Test suites (NOT OPTIONAL)
-```
-
-## 🗺️ BoxLang Mappings
-
-This template comes pre-configured with essential BoxLang mappings in the `runtime/config/boxlang.json` file to make development seamless. These mappings provide convenient shortcuts to access different parts of your application:
-
-## ☕ Java Dependencies
-
-If your project relies on Java third-party dependencies, you can use the included Maven `pom.xml` file in the root. You can add your dependencies there and then run the `mvn install` command to download them into the `lib/java` folder (configured in the Maven `pom.xml`). The BoxLang application will automatically class load all the jars in that folder for you! 🎯
-
-You can also use the `mvn clean` command to remove all the jars. 🧹
-
-You can find Java dependencies here: <https://central.sonatype.com/>. Just grab the Maven coordinates and add them to your `pom.xml` file. 📦
-
-## ⚡ Vite Frontend Build System
-
-If you chose to use **Vite** during setup, this template includes a modern frontend build system with Vue 3 and Tailwind CSS support. Vite provides lightning-fast hot module replacement (HMR) and optimized production builds.
-
-### 📂 Asset Structure
-
-```text
-resources/
-└── assets/
-    ├── css/
-    │   └── app.css          # Main stylesheet (Tailwind)
-    └── js/
-        └── app.js           # Main JavaScript (Vue 3 app)
-
-public/
-└── includes/                # Compiled assets (generated by Vite)
-    ├── manifest.json        # Asset manifest for production
-    └── assets/
-        ├── app-[hash].css   # Compiled & hashed CSS
-        └── app-[hash].js    # Compiled & hashed JS
-```
-
-### 🚀 Using Vite
-
-#### Development Mode (Hot Module Replacement)
+### Run in Development
 
 ```bash
 npm run dev
 ```
 
-This starts the Vite development server with HMR at `http://localhost:5173`. The ColdBox application automatically detects the dev server and loads assets from it.
+This starts Vite and then launches Electron once the dev server is available.
 
-#### Production Build
+## Build & Package
+
+### Vite Build
+
+Builds frontend assets and outputs them to `public/includes/resources/`:
 
 ```bash
 npm run build
 ```
 
-Compiles and optimizes assets for production, outputting them to `public/includes/`. The generated files include content hashes for cache busting.
+### Start Production Build
 
-### 📝 Including Assets in Views
-
-The `vite()` helper function automatically loads assets based on the environment:
-
-```xml
-<!--- In your Main.bxm layout --->
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    #vite([
-        "resources/assets/css/app.css",
-        "resources/assets/js/app.js"
-    ])#
-</head>
-```
-
-**Development**: Loads from Vite dev server (`http://localhost:5173`)
-**Production**: Loads compiled assets from `public/includes/assets/`
-
-### 🎨 Customizing Vite
-
-#### Change Output Directory
-
-```javascript
-coldbox({
-    input: [ "resources/assets/css/app.css", "resources/assets/js/app.js" ],
-    refresh: true,
-    publicDirectory: "public",
-    buildDirectory: "dist"      // Assets output to public/dist/
-})
-```
-
-#### Add More Entry Points:
-
-```javascript
-coldbox({
-    input: [
-        "resources/assets/css/app.css",
-        "resources/assets/js/app.js",
-        "resources/assets/js/admin.js",     // Additional JS entry
-        "resources/assets/css/admin.css"    // Additional CSS entry
-    ],
-    refresh: true
-})
-```
-
-#### Configure Refresh Paths:
-
-```javascript
-coldbox({
-    input: [ "resources/assets/css/app.css", "resources/assets/js/app.js" ],
-    refresh: [
-        "app/layouts/**",
-        "app/views/**",
-        "app/config/Router.bx",
-        "app/handlers/**/*.bx"   // Also refresh on handler changes
-    ]
-})
-```
-
-> **📚 Learn More**: Check out the [coldbox-vite-plugin documentation](https://github.com/coldbox/coldbox-vite-plugin) and [Vite documentation](https://vitejs.dev) for advanced configuration options.
-
-## 📦 Build Script (`Build.bx`)
-
-The **Build.bx** script compiles and packages your application for distribution. It creates optimized, production-ready builds that can be deployed to any environment.
+Runs the built application without development mode:
 
 ```bash
-boxlang Build.bx
+npm run prod
 ```
 
-### What Build.bx Does
+### Generate Icons
 
-The build process performs the following steps:
+Generates platform-specific icon files from the PNG source iconset:
 
-1. **🧹 Clean Build Directory**: Removes any existing `build/` folder and creates a fresh structure
-2. **📁 Copy Sources**: Copies application files (`app/`, `modules/`, `public/`, `runtime/`) to the build package
-3. **⊘ Smart Exclusions**: Automatically excludes:
-   - Log files and directories (`logs/`, `*.log`)
-   - System files (`.DS_Store`, `Thumbs.db`)
-   - Hidden files and folders (`.git`, `.gitignore`, etc.)
-4. **🏷️ Build ID**: Creates a build information file with project name, version, and timestamp
-5. **🔨 Compilation**: Compiles BoxLang sources in `app/` and `public/` to optimized bytecode
-6. **📦 Distribution Package**: Creates a ZIP file: `build/distributions/{projectName}-{projectVersion}.zip`
-7. **🔐 Checksums**: Generates security checksums (MD5, SHA-256, SHA-512) for integrity verification
+```bash
+npm run generate:icons
+```
 
-### Build Output Structure
+This creates:
+- `public/includes/icon.icns` - macOS
+- `public/includes/icon.ico` - Windows
+- `public/includes/icon.png` - Generic fallback
+
+### Package Application
+
+Packages the application as a distributable for your platform:
+
+```bash
+# Current platform
+npm run package
+
+# Specific platform
+npm run package:mac
+npm run package:win
+npm run package:linux
+
+# Full packaging (downloads MiniServer runtime first)
+npm run package:full
+```
+
+### Package MiniServer Runtime
+
+Downloads and extracts the BoxLang MiniServer runtime into `runtime/bin/` and `runtime/lib/`:
+
+```bash
+npm run package:miniserver
+```
+
+The version is controlled by `.bvmrc`.
+
+## Electron Forge
+
+This template uses **Electron Forge** for building and packaging desktop applications.
+
+### Platform-Specific Outputs
+
+**macOS (`npm run package:mac`)**
+- Output: `dist/Electron/` directory
+- Files: `ColdBox-BoxLang-Desktop-x.x.x-arm64.dmg`, `.zip`
+- Code signing: Requires `CSC_*` or `APPLE_*` environment variables
+
+**Windows (`npm run package:win`)**
+- Output: `dist/Electron/` directory
+- Files: NSIS installer `.exe`, `.msi`, `.zip` (Squirrel.Windows)
+- Icon: Reads from `public/includes/icon.ico` (generated by `npm run generate:icons`)
+- Requires: Node.js 20 LTS (cross-zip dependency compatibility)
+
+**Linux (`npm run package:linux`)**
+- Output: `dist/Electron/` directory
+- Files: `.deb`, `.rpm`, `.flatpak`, `.zip`
+- Icon: Uses `public/includes/icon.png`
+
+### Configuration
+
+`forge.config.cjs` controls all packaging behavior:
+
+- `asar`: **Always false** (MiniServer must be spawned as a real filesystem executable)
+- `icon`: Resolves to `public/includes/icon` (Forge appends platform-specific extensions)
+- `makers`: Array of active makers (dmg, zip for macOS; squirrel, zip for Windows; deb, rpm, flatpak for Linux)
+- `postMake`: Hook that copies unsigned-build helper scripts into ZIP artifacts
+
+### Icon Resolution
+
+Forge resolves icon filenames by appending platform-specific extensions:
+
+| Platform | Icon File              | Required | Generated by          |
+|----------|------------------------|----------|------------------------|
+| macOS    | public/includes/icon.icns | Yes   | npm run generate:icons |
+| Windows  | public/includes/icon.ico  | Yes   | npm run generate:icons |
+| Linux    | public/includes/icon.png  | No    | Included in repo       |
+
+**Missing icons will cause build failures on the target platform.**
+
+## Icons
+
+Icons are stored in `public/includes/icon.iconset/`:
 
 ```text
-build/
-├── package/                          # Staged files ready for distribution
-│   ├── app/                         # Compiled application code
-│   ├── modules/                     # Application modules
-│   ├── public/                      # Compiled public assets
-│   ├── lib/                      # Compiled Runtime Library
-│   ├── runtime/                     # Runtime configuration (without logs)
-│   └── {projectName}-{version}.md   # Build information
-└── distributions/                    # Final distribution files
-    ├── {projectName}-{version}.zip
-    ├── {projectName}-{version}.zip.md5
-    ├── {projectName}-{version}.zip.sha256
-    └── {projectName}-{version}.zip.sha512
+public/includes/
+└── icon.iconset/
+    ├── icon_16x16.png
+    ├── icon_32x32.png
+    ├── icon_64x64.png
+    ├── icon_128x128.png
+    ├── icon_256x256.png
+    ├── icon_512x512.png
+    └── icon_1024x1024.png
 ```
 
-### Customizing the Build
+Run `npm run generate:icons` to create:
+- `public/includes/icon.icns` (macOS)
+- `public/includes/icon.ico` (Windows)
 
-You can customize what gets included or excluded by editing the `Build.bx` file's initialization section. The build script uses two configurable arrays:
+These generated files **should be committed** to your repository to ensure faster CI builds and consistent packaging.
 
-#### 📦 **Sources Array** - What to Include
+## Configuration
 
-Controls which directories and files get packaged in your distribution:
+### MiniServer Configuration
 
-```boxlang
-// Source directories to package
-variables.sources = [
-    ".cbmigrations.json",  // Database migrations state
-    "box.json",            // Project metadata
-    "app",                 // Your ColdBox application
-    "lib",             // Your LIbrary
-    "public",              // Web root with assets
-    "runtime"              // BoxLang runtime config
-];
-```
+**`miniserver.json`**
 
-**To add more sources**, simply append to the array:
+Controls the local development server:
 
-```boxlang
-variables.sources = [
-    ".cbmigrations.json",
-    "box.json",
-    "app",
-    "modules",
-    "public",
-    "runtime",
-    "config",              // Add custom config directory
-    "resources/database"   // Include database resources
-];
-```
-
-#### 🚫 **Excludes Array** - What to Skip
-
-Uses **regex patterns** to exclude files/directories from the build:
-
-```boxlang
-// Files and folders to exclude from the build (regex patterns)
-variables.excludes = [
-    "logs/",           // Log directories
-    "\.DS_Store$",     // macOS system files
-    "Thumbs\.db$"      // Windows system files
-];
-```
-
-**Common exclusion patterns**:
-
-```boxlang
-variables.excludes = [
-    "logs/",              // Exclude all log directories
-    "\.log$",             // Exclude .log files
-    "\.tmp$",             // Exclude .tmp files
-    "test-results/",      // Exclude test output
-    "node_modules/",      // Exclude npm dependencies
-    "\.git",              // Exclude git repository
-    "\.env",              // Exclude environment files
-    "\.bak$",             // Exclude backup files
-    "resources/vite/",    // Exclude vite resources after setup
-    "resources/rest/"     // Exclude rest resources after setup
-];
-```
-
-**Regex Pattern Tips**:
-- Use `$` to match end of string: `\.log$` matches files ending in `.log`
-- Use `/` to match directories: `logs/` matches any `logs` directory
-- Use `\.` to escape dots: `\.DS_Store$` matches `.DS_Store` files
-- Use `.*` for wildcards: `temp.*` matches anything starting with `temp`
-
-#### 🔧 **Example: Custom Build Configuration**
-
-```boxlang
-function init(){
-    // ... existing code ...
-
-    // Custom sources for your project
-    variables.sources = [
-        ".cbmigrations.json",
-        "box.json",
-        "app",
-        "modules",
-        "public",
-        "runtime",
-        "custom-config",        // Add your custom directory
-        "static-files"          // Add static file directory
-    ];
-
-    // Comprehensive exclusions
-    variables.excludes = [
-        "logs/",                // No log files
-        "\.DS_Store$",          // No macOS files
-        "Thumbs\.db$",          // No Windows files
-        "test-results/",        // No test outputs
-        "\.env\..*",            // No environment files
-        "resources/vite/",      // No vite setup resources
-        "resources/rest/",      // No rest setup resources
-        "resources/docker/",    // No docker setup resources
-        "Setup\.bx$"            // No setup script
-    ];
-
-    return this;
+```json
+{
+  "app": {
+    "name": "ColdBox BoxLang Desktop",
+    "logdir": "./logs"
+  },
+  "server": {
+    "port": 59700,
+    "host": "127.0.0.1",
+    "webroot": "./public"
+  },
+  "warmupUrl": "http://127.0.0.1:59700/",
+  "healthCheckUrl": "http://127.0.0.1:59700/health"
 }
 ```
 
-> **💡 Pro Tip**: Review your `variables.excludes` after running `Setup.bx` to ensure you're not packaging unnecessary setup resources!
+### Runtime Configuration
 
-### Deploying Your Build:
+**`.boxlang-dev.json`**
 
-Once the build completes, you can:
+Development-only overrides (loaded by `miniserver.json`):
 
-1. **Upload the ZIP**: Deploy `{projectName}-{version}.zip` to your server
-2. **Verify Integrity**: Use the checksum files to verify the package wasn't corrupted during transfer
-3. **Extract & Run**: Unzip on your server and start with CommandBox
-
-```bash
-# On your server
-unzip cbtemplate-boxlang-1.1.0.zip
-cd cbtemplate-boxlang-1.1.0
-box server start
+```json
+{
+  "boxlang": {
+    "compiler": {
+      "nullChecking": true
+    },
+    "runtime": {
+      "allowImplicitStructKeyAccess": true
+    }
+  }
+}
 ```
 
-> **🚀 Pro Tip**: Integrate `Build.bx` into your CI/CD pipeline to automatically build and deploy your application on every release!
+**`.boxlang.json`**
 
-## 🐳 Dockerfile
+Production configuration (used in packaged builds):
 
-We have included a [`docker/Dockerfile`](docker/Dockerfile) so you can build docker containers from your source code. We have also added enhanced docker scripts in your `box.json` so you can build the docker image and run the docker image using our [CommandBox Docker](https://hub.docker.com/r/ortussolutions/commandbox) containers.
-
-```bash
-# Build a docker **container**
-run-script docker:build
-# Run the container
-run-script docker:run
-# Go into the container's bash prompt
-run-script docker:bash
+```json
+{
+  "boxlang": {
+    "compiler": {
+      "nullChecking": false
+    }
+  }
+}
 ```
 
-## 🐙 Docker Compose Stack
+## Frontend Assets
 
-We have included an improved [`docker/docker-compose.yaml`](docker/docker-compose.yml) stack that can be used to run the application in a container alongside a database. We have included support for MySQL, PostgreSQL and MSSQL. We have also included the `run-script docker:stack` command so you can compose the stack up or down with enhanced configuration and better networking.
+The Vite pipeline compiles assets to `public/includes/resources/`:
 
-```bash
-run-script docker:stack up
-run-script docker:stack down
+```text
+resources/
+└── assets/
+    ├── fonts/           → public/includes/resources/fonts/
+    ├── js/
+    │   └── app.js       → public/includes/resources/app-[hash].js
+    └── scss/
+        └── app.scss     → public/includes/resources/app-[hash].css
 ```
 
-## 💻 VSCode Helpers
+### In Your Views
 
-We have included two vscode helpers for you:
+Use the `ViteHelper` to load assets automatically:
 
-* `.vscode/settings.json` - Includes introspection helpers for ColdBox and TestBox 🔍
-* `.vscode/tasks.json` - Tasks to assist in running a Test Bundle and a CommandBox Task ⚡
+```xml
+<!-- app/layouts/Main.bxm -->
+<head>
+    #viteHelper.asset( "resources/assets/js/app.js" )#
+    #viteHelper.asset( "resources/assets/scss/app.scss" )#
+</head>
+```
 
-We have included two custom tasks:
+The helper automatically:
+- **Development**: Loads from Vite dev server (HMR enabled)
+- **Production**: Loads compiled & hashed assets from `public/includes/resources/`
 
-* `Run CommandBox Task` - Open a CommandBox task and run it 🏃‍♂️
-* `Run TestBox Bundle` - Open the bundle you want to test and then run it 🧪
+## Development Scripts
 
-To run the custom tasks open the command palette and choose `Tasks: Run Build Task` or the shortcut `⇧⌘B` 🚀
+### Key npm Scripts
 
-## 🎉 Welcome to ColdBox
+```bash
+npm run dev              # Start Vite dev server + Electron (development)
+npm run build           # Build Vite assets for production
+npm run start           # Start Electron only (assumes Vite already running)
+npm run prod            # Production build + production runtime config
+npm run package         # Package current platform (create installers/DMG)
+npm run package:mac     # Package macOS DMG + ZIP
+npm run package:win     # Package Windows installer + ZIP
+npm run package:linux   # Package Linux deb/rpm/flatpak + ZIP
+npm run package:full    # Download MiniServer runtime + package current platform
+npm run generate:icons  # Generate platform-specific icon files
+```
 
-ColdBox *Hierarchical* MVC is the de-facto enterprise-level [HMVC](https://en.wikipedia.org/wiki/Hierarchical_model%E2%80%93view%E2%80%93controller) framework for BoxLang and CFML developers. It's professionally backed, conventions-based, modular, highly extensible, and productive. Getting started with ColdBox is quick and painless. ColdBox takes the pain out of development by giving you a standardized methodology for development with features such as:
+### Development Workflow
 
-* 📐 [Conventions instead of configuration](https://coldbox.ortusbooks.com/getting-started/conventions)
-* 🛣️ [Modern URL routing](https://coldbox.ortusbooks.com/the-basics/routing)
-* 🚀 [RESTFul APIs](https://coldbox.ortusbooks.com/the-basics/event-handlers/rendering-data)
-* 🏗️ [A hierarchical approach to MVC using ColdBox Modules](https://coldbox.ortusbooks.com/hmvc/modules)
-* 🎯 [Event-driven programming](https://coldbox.ortusbooks.com/digging-deeper/interceptors)
-* ⚡ [Async and Parallel programming constructs](https://coldbox.ortusbooks.com/digging-deeper/promises-async-programming)
-* 🧪 [Integration & Unit Testing](https://coldbox.ortusbooks.com/testing/testing-coldbox-applications)
-* 💉 [Included dependency injection](https://wirebox.ortusbooks.com)
-* 🗄️ [Caching engine and API](https://cachebox.ortusbooks.com)
-* 📝 [Logging engine](https://logbox.ortusbooks.com)
-* 🌐 [An extensive eco-system](https://forgebox.io)
-* 🎊 Much More
+```bash
+# Terminal 1: Start development
+npm run dev
 
-## 📚 Learning ColdBox
+# This starts:
+# 1. Vite dev server at http://127.0.0.1:3000
+# 2. BoxLang MiniServer at http://127.0.0.1:59700
+# 3. Electron window loading http://127.0.0.1:59700
 
-ColdBox is the defacto standard for building modern BoxLang and ColdFusion (CFML) applications. It has the most extensive [documentation](https://coldbox.ortusbooks.com) of all modern web application frameworks. 📖
+# Edit your .bxm templates or .bx handlers → immediate reload
+# Edit your JS/SCSS in resources/assets/ → HMR updates in window
+```
 
-If you don't like reading so much, then you can try our video learning platform: [CFCasts (www.cfcasts.com)](https://www.cfcasts.com) 🎥
+### Production Build Workflow
 
-## 💰 ColdBox Sponsors
+```bash
+# Build Vite assets
+npm run build
 
-ColdBox is a professional open-source project and it is completely funded by the [community](https://patreon.com/ortussolutions) and [Ortus Solutions, Corp](https://www.ortussolutions.com). Ortus Patreons get many benefits like a cfcasts account, a FORGEBOX Pro account and so much more. If you are interested in becoming a sponsor, please visit our patronage page: [https://patreon.com/ortussolutions](https://patreon.com/ortussolutions) ❤️
+# Test production build locally
+npm run prod
 
-### 🙏 THE DAILY BREAD
+# Package for distribution
+npm run package:full    # If MiniServer runtime needs re-downloading
+npm run package        # If MiniServer runtime already packaged
+```
 
- > "I am the way, and the truth, and the life; no one comes to the Father, but by me (JESUS)" Jn 14:1-12
+## Troubleshooting
+
+### MiniServer Fails to Start
+
+**Symptom**: Electron window is blank or shows "Connection refused"
+
+**Likely Causes**:
+- Java 21+ not installed: `java --version`
+- Port 59700 already in use: `lsof -i :59700`
+- BoxLang runtime not packaged: `npm run package:miniserver`
+
+**Solutions**:
+```bash
+# Verify Java is installed
+java --version
+
+# Kill process on port 59700
+lsof -i :59700 | grep LISTEN | awk '{print $2}' | xargs kill -9
+
+# Re-package MiniServer runtime
+npm run package:miniserver
+
+# Restart development
+npm run dev
+```
+
+### Permission Denied on macOS/Linux
+
+**Symptom**: `runtime/bin/boxlang-miniserver: Permission denied`
+
+**Solution**:
+```bash
+chmod +x runtime/bin/boxlang-miniserver
+npm run dev
+```
+
+### Icon Error on Windows
+
+**Symptom**: "Fatal error: Unable to set icon" during `npm run package:win`
+
+**Cause**: `public/includes/icon.ico` missing
+
+**Solution**:
+```bash
+npm run generate:icons
+npm run package:win
+```
+
+### Asset 404 in Development
+
+**Symptom**: CSS/JS not loading in dev-mode window
+
+**Likely Causes**:
+- Vite dev server not started (verify port 3000)
+- ViteHelper not loading assets correctly
+- publicDir setting disabled in vite.config.mjs
+
+**Solutions**:
+```bash
+# Ensure both servers are running
+npm run dev
+
+# In a separate terminal, verify Vite server
+curl http://127.0.0.1:3000
+
+# Check ViteHelper.bx is loaded in your layout
+grep -r "include.*ViteHelper" app/
+```
+
+### Node.js Version Issues
+
+**Symptom**: Windows build fails with "fs.rmdir recursive not supported"
+
+**Cause**: cross-zip (Forge dependency) requires Node.js 20 LTS; Node 22+ removed fs.rmdir
+
+**Solution**:
+```bash
+# Use Node 20 LTS
+nvm use 20
+npm run package:win
+```
+
+## Learning Resources
+
+- [ColdBox Documentation](https://coldbox.ortusbooks.com/)
+- [BoxLang Documentation](https://boxlang.ortusbooks.com/)
+- [Electron Documentation](https://www.electronjs.org/docs)
+- [Electron Forge Documentation](https://www.electronforge.io/)
+- [Vite Documentation](https://vitejs.dev/)
+
+---
+
+<div align="center">
+  Made with ❤️ by <a href="https://www.ortussolutions.com">Ortus Solutions, Corp</a>
+
+  <sub>
+    THE DAILY BREAD 🍞 Give us our daily bread and forgive us our digital sins, as we forgive those who code against us.
+  </sub>
+</div>
