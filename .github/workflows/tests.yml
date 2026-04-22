@@ -37,7 +37,7 @@ jobs:
           boxlang-miniserver miniserver.json &
           echo "Waiting for server to be ready..."
           for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:59700/health && break
+            curl -sf http://127.0.0.1:59700/healthcheck && break
             echo "  attempt $i/30 — not ready yet, retrying in 3s..."
             sleep 3
           done
