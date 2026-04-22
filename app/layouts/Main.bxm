@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ColBox Desktop Application</title>
+	<!-- Vite CSS Assets (includes Bootstrap 5 + BoxLang theme) -->
+	<bx:output>#getInstance( "ViteHelper" ).styles( "app" )#</bx:output>
+</head>
+<body class="desktop-home">
+	<!-- Navigation -->
+	<nav class="navbar navbar-expand-lg sticky-top app-navbar">
+		<div class="container-fluid">
+			<a class="navbar-brand app-brand" href="#" aria-label="BoxLang Desktop">
+				<img class="brand-logo brand-logo-dark" src="/includes/images/coldbox-logo-full-dark.svg" alt="ColdBox Desktop App">
+				<img class="brand-logo brand-logo-light" src="/includes/images/coldbox-logo-full-light.svg" alt="ColdBox Desktop App">
+			</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="navbar-nav ms-auto">
+					<li class="nav-item">
+						<button id="themeToggleBtn" class="theme-toggle-btn" type="button" title="Toggle dark/light mode" aria-label="Toggle dark/light mode">
+							<span id="themeIcon" aria-hidden="true">🌙</span>
+						</button>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+
+	<!--- Render View --->
+	<bx:output>#view()#</bx:output>
+
+	<!-- Footer -->
+	<footer class="border-top mt-5 py-4">
+		<div class="container-lg text-center">
+			<p class="text-muted mb-0">Built with <span class="text-boxlang">❤</span> using BoxLang, ColdBox, Electron & Vite</p>
+		</div>
+	</footer>
+
+	<!-- Vite JavaScript Assets (includes Alpine.js + Bootstrap 5 JS) -->
+	<bx:output>#getInstance( "ViteHelper" ).scripts( "app" )#</bx:output>
+
+	<script>
+		const THEME_STORAGE_KEY = 'boxlang-theme';
+
+		function getInitialTheme() {
+			try {
+				const storedTheme = localStorage.getItem( THEME_STORAGE_KEY );
+				if ( storedTheme === 'dark' || storedTheme === 'light' ) {
+					return storedTheme;
+				}
+			} catch ( error ) {
+				console.warn( 'Could not read theme preference from localStorage', error );
+			}
+
+			return 'dark';
+		}
+
+		function updateThemeIcon( theme ) {
+			const themeIcon = document.getElementById( 'themeIcon' );
+			if ( !themeIcon ) {
+				return;
+			}
+
+			themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+		}
+
+		function setTheme( theme ) {
+			const resolvedTheme = theme === 'light' ? 'light' : 'dark';
+			document.documentElement.setAttribute( 'data-bs-theme', resolvedTheme );
+			updateThemeIcon( resolvedTheme );
+
+			try {
+				localStorage.setItem( THEME_STORAGE_KEY, resolvedTheme );
+			} catch ( error ) {
+				console.warn( 'Could not persist theme preference to localStorage', error );
+			}
+		}
+
+		document.addEventListener( 'DOMContentLoaded', function() {
+			setTheme( getInitialTheme() );
+
+			const themeToggleBtn = document.getElementById( 'themeToggleBtn' );
+			if ( themeToggleBtn ) {
+				themeToggleBtn.addEventListener( 'click', function() {
+					const currentTheme = document.documentElement.getAttribute( 'data-bs-theme' ) === 'light' ? 'light' : 'dark';
+					setTheme( currentTheme === 'dark' ? 'light' : 'dark' );
+				} );
+			}
+
+			const jsAlertBtn = document.getElementById( 'jsAlertBtn' );
+			if ( jsAlertBtn ) {
+				jsAlertBtn.addEventListener( 'click', showAlert );
+			}
+		} );
+
+		function showAlert() {
+			alert( '🎉 BoxLang + ColdBox + Electron + Vite + Bootstrap = Awesome Desktop App!' );
+		}
+	</script>
+</body>
+</html>

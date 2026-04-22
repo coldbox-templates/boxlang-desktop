@@ -1,0 +1,43 @@
+{
+    "name":"ColdBox BoxLang Desktop App Template",
+    "version":"1.0.0",
+    "author":"You",
+    "location":"forgeboxStorage",
+    "slug":"cbtemplate-boxlang-desktop",
+    "createPackageDirectory":false,
+    "type":"mvc",
+    "language":"boxlang",
+    "shortDescription":"A starter template for building desktop applications with BoxLang and Electron.",
+    "ignore":[
+        "changelog.md",
+        ".github/ISSUE_TEMPLATE",
+        ".github/workflows/*",
+        ".github/CONTRIBUTING.md",
+        ".github/FUNDING.YML",
+        ".github/PULL_REQUEST_TEMPLATE.md"
+    ],
+    "dependencies":{
+        "coldbox":"^8.0.0",
+        "bx-esapi":"^1.7.0+10"
+    },
+    "devDependencies":{
+        "testbox":"*",
+        "route-visualizer":"*",
+        "testbox-cli":"*"
+    },
+    "installPathConventions":{
+        "modules":"lib/modules"
+    },
+    "installPaths":{
+        "coldbox":"lib/coldbox/",
+        "testbox":"lib/testbox/",
+        "route-visualizer":"lib/modules/route-visualizer/",
+        "bx-esapi":"runtime/modules/bx-esapi/"
+    },
+    "scripts":{
+        "postInstall":"pathExists .env || cp .env.example .env && package set ignore=[]"
+    },
+    "testbox":{
+        "runner":"http://localhost:59700/tests/runner.cfm"
+    }
+}

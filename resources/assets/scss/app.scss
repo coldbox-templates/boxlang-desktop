@@ -1,0 +1,6 @@
+// BoxLang Electron Application Styles
+// ====================================
+// Keep app.scss as the single entrypoint consumed by Vite.
+// All visual styling is defined in the BoxLang theme to avoid conflicting rules.
+
+@import "boxlang-theme.scss";

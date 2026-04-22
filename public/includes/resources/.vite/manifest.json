@@ -1,0 +1,29 @@
+{
+  "resources/assets/js/app.js": {
+    "file": "js/app-SFFcSVnl.js",
+    "name": "app",
+    "src": "resources/assets/js/app.js",
+    "isEntry": true,
+    "css": [
+      "css/styles-BFWn2xae.css"
+    ]
+  },
+  "resources/assets/scss/app.scss": {
+    "file": "css/styles-BFWn2xae.css",
+    "src": "resources/assets/scss/app.scss",
+    "isEntry": true,
+    "names": [
+      "styles.css",
+      "theme.css"
+    ]
+  },
+  "resources/assets/scss/boxlang-theme.scss": {
+    "file": "css/styles-BFWn2xae.css",
+    "src": "resources/assets/scss/app.scss",
+    "isEntry": true,
+    "names": [
+      "styles.css",
+      "theme.css"
+    ]
+  }
+}
