@@ -46,7 +46,7 @@ jobs:
         run: |
           mkdir -p tests/results
           curl -sf "http://127.0.0.1:59700/tests/runner.bxm?reporter=text"
-          box testbox run ru
+          box testbox run runner="http://127.0.0.1:59700/tests/runner.bxm" --verbose outputFile=tests/results/test-results outputFormats=json,antjunit
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
