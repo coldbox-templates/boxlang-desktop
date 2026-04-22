@@ -8,43 +8,25 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     env:
-      DB_USER: root
-      DB_PASSWORD: root
-      WEB_PORT: 60299
+      BOXLANG_DEBUG: true
+      ENVIRONMENT: testing
       JDK_VERSION: "21"
     strategy:
       fail-fast: false
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      # Not Needed in this module
-      - name: Setup Database and Fixtures
-        run: |
-          sudo systemctl start mysql.service
-          mysql -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE coldbox;'
+        uses: actions/checkout@v6
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: "temurin"
           java-version: ${{ env.JDK_VERSION }}
 
-      - name: Setup CommandBox CLI
-        uses: Ortus-Solutions/setup-commandbox@v2.0.1
+      - name: Setup BoxLang
+        uses: ortus-boxlang/setup-boxlang@main
         with:
-          install: testbox-cli,commandbox-boxlang
-
-      - name: Setup Environment For Testing Process
-        run: |
-          # Setup .env
-          touch .env
-          # ENV
-          printf "DB_HOST=localhost\n" >> .env
-          printf "DB_DATABASE=coldbox\n" >> .env
-          printf "DB_DRIVER=MySQL\n" >> .env
-          printf "DB_USER=${{ env.DB_USER }}\n" >> .env
-          printf "DB_PASSWORD=${{ env.DB_PASSWORD }}\n" >> .env
+          with-commandbox: true
 
       - name: Install Dependencies
         run: |
@@ -52,14 +34,19 @@ jobs:
 
       - name: Start ${{ matrix.cfengine }} Server
         run: |
-          box server set web.http.port=${{ env.WEB_PORT }}
-          box server start --debug
-          curl http://127.0.0.1:${{ env.WEB_PORT }}
+          boxlang-miniserver miniserver.json &
+          echo "Waiting for server to be ready..."
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:59700/health && break
+            echo "  attempt $i/30 — not ready yet, retrying in 3s..."
+            sleep 3
+          done
 
       - name: Run Tests
         run: |
           mkdir -p tests/results
-          box testbox run --verbose outputFile=tests/results/test-results outputFormats=json,antjunit
+          curl -sf "http://127.0.0.1:59700/tests/runner.bxm?reporter=text"
+          box testbox run ru
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -75,16 +62,3 @@ jobs:
           name: test-results-${{ matrix.cfengine }}
           path: |
             tests/results/**/*
-
-      - name: Show Server Log On Failures
-        if: ${{ always() }}
-        run: |
-          box server log
-
-      - name: Upload Debug Logs To Artifacts
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: Failure Debugging Info - ${{ matrix.cfengine }}
-          path: |
-            .engine/**/logs/*
