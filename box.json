@@ -35,7 +35,9 @@
         "bx-esapi":"runtime/modules/bx-esapi/"
     },
     "scripts":{
-        "postInstall":"pathExists .env || cp .env.example .env && package set ignore=[]"
+        "postInstall":"pathExists .env || cp .env.example .env && package set ignore=[]",
+		"format":"!boxlang format --source app/,tests/specs/,*.bx",
+        "format:check":"!boxlang format --check --source app/,tests/specs/,*.bx"
     },
     "testbox":{
         "runner":"http://localhost:59700/tests/runner.cfm"
