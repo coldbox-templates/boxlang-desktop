@@ -66,9 +66,9 @@ function postMake( forgeConfig, makeResults ) {
 
 module.exports = {
 	packagerConfig: {
-		name        : "ColdBox Desktop",
-		appId       : "io.coldbox.starter",
-		executableName: 'coldbox-starter-electron',
+		name        : "BoxLang Starter Desktop",
+		appId       : "io.boxlang.starter",
+		executableName: 'boxlang-starter-electron',
 		/**
 		 * CRITICAL: Must remain false.
 		 * BoxLang.js spawns runtime/bin/boxlang-miniserver as a real filesystem

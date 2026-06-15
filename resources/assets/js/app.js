@@ -21,7 +21,7 @@ Alpine.start();
 
 // Application initialization
 document.addEventListener( "DOMContentLoaded", () => {
-    console.log( "ColdBox Desktop App initialized" );
+    console.log( "BoxLang Electron App initialized" );
 
     // Add any app-specific initialization here
 } );
