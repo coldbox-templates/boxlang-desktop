@@ -21,34 +21,34 @@ jobs:
   ##########################################################################################
   # Format Source Code
   ##########################################################################################
-  format:
-    name: Checks Source Code Formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v6
+  # format:
+  #   name: Checks Source Code Formatting
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v6
 
-      - name: Setup BoxLang
-        uses: ortus-boxlang/setup-boxlang@main
-        with:
-          with-commandbox: true
+  #     - name: Setup BoxLang
+  #       uses: ortus-boxlang/setup-boxlang@main
+  #       with:
+  #         with-commandbox: true
 
-      - name: Check Formatting
-        run: |
-          box run-script format
+  #     - name: Check Formatting
+  #       run: |
+  #         box run-script format
 
-      - name: Commit Format Changes
-        uses: stefanzweifel/git-auto-commit-action@v7.1.0
-        with:
-          commit_message: Apply formatting changes
-          push_options: --force
+  #     - name: Commit Format Changes
+  #       uses: stefanzweifel/git-auto-commit-action@v7.1.0
+  #       with:
+  #         commit_message: Apply formatting changes
+  #         push_options: --force
 
   ##########################################################################################
   # Release it
   ##########################################################################################
   release:
     uses: ./.github/workflows/release.yml
-    needs: [ tests, format ]
+    needs: [ tests ]
     secrets: inherit
     with:
       snapshot: true

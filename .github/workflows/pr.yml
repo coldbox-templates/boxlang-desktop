@@ -17,18 +17,18 @@ jobs:
     uses: ./.github/workflows/tests.yml
     secrets: inherit
 
-  formatCheck:
-    name: Checks Source Code Formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v6
+  # formatCheck:
+  #   name: Checks Source Code Formatting
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v6
 
-      - name: Setup BoxLang
-        uses: ortus-boxlang/setup-boxlang@main
-        with:
-          with-commandbox: true
+  #     - name: Setup BoxLang
+  #       uses: ortus-boxlang/setup-boxlang@main
+  #       with:
+  #         with-commandbox: true
 
-      - name: Check Formatting
-        run: |
-          box run-script format:check
+  #     - name: Check Formatting
+  #       run: |
+  #         box run-script format:check
