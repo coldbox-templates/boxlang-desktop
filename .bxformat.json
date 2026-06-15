@@ -75,8 +75,8 @@
     "padding" : true,
     "empty_padding" : false,
     "comma_dangle" : false,
-    "multiline_count" : 3,
-    "multiline_length" : 60
+    "multiline_count" : 5,
+    "multiline_length" : 50
   },
   "braces" : {
     "style" : "same-line",
@@ -98,6 +98,7 @@
     "break_length" : 2147483647
   },
   "template" : {
+	"enabled": false,
     "component_prefix" : "bx",
     "indent_content" : false,
     "single_attribute_per_line" : false,
