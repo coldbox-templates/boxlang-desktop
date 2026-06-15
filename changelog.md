@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-04-22
-
 ## [8.5.0] - 2026-03-17
+
+- More updates to desktop runtime
 
 ## [8.4.0] - 2025-11-10
 
@@ -61,7 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ColdBox 8 readyness
 
-[unreleased]: https://github.com/coldbox-templates/boxlang-desktop/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/coldbox-templates/boxlang-desktop/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/coldbox-templates/boxlang-desktop/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/coldbox-templates/boxlang-desktop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/coldbox-templates/boxlang-desktop/compare/v8.5.0...v1.0.0
 [8.5.0]: https://github.com/coldbox-templates/boxlang/compare/v8.4.0...v8.5.0
 [8.4.0]: https://github.com/coldbox-templates/boxlang/compare/v8.3.0...v8.4.0

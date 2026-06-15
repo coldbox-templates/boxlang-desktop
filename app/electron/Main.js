@@ -16,9 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { app, BrowserWindow, nativeImage, dialog } from "electron";
+import { app, BrowserWindow, nativeImage, dialog, ipcMain, shell, clipboard } from "electron";
 import { fileURLToPath } from 'url';
 import { mkdirSync, appendFileSync } from 'fs';
+import dotenv from "dotenv";
 
 // Import our modular components
 import { AppMenu } from './AppMenu.js';
@@ -30,79 +31,18 @@ import { TrayMenu } from './TrayMenu.js';
 const path = await import( "path" );
 process.env.PATH = process.env.PATH + ":/usr/local/bin";
 
+// Debugging Log File Setup
 let mainLogFilePath = null;
-
-function serializeLogArgs ( args ) {
-	return args.map( ( arg ) => {
-		if ( arg instanceof Error ) {
-			return `${arg.message}\n${arg.stack || ''}`;
-		}
-
-		if ( typeof arg === 'object' ) {
-			try {
-				return JSON.stringify( arg );
-			} catch {
-				return String( arg );
-			}
-		}
-
-		return String( arg );
-	} ).join( ' ' );
-}
-
-function appendMainLog ( level, args ) {
-	if ( !mainLogFilePath ) {
-		return;
-	}
-
-	try {
-		const line = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${serializeLogArgs( args )}\n`;
-		appendFileSync( mainLogFilePath, line, 'utf8' );
-	} catch {
-		// Ignore file logging failures to avoid breaking startup.
-	}
-}
-
-function setupMainProcessLogging () {
-	const originalConsole = {
-		log: console.log.bind( console ),
-		info: console.info.bind( console ),
-		warn: console.warn.bind( console ),
-		error: console.error.bind( console )
-	};
-
-	try {
-		app.setAppLogsPath();
-		const logsDir = app.getPath( 'logs' );
-		mkdirSync( logsDir, { recursive: true } );
-		mainLogFilePath = path.join( logsDir, 'main.log' );
-		appendMainLog( 'log', [ `==== App startup (pid ${process.pid}) ====` ] );
-	} catch ( error ) {
-		originalConsole.warn( 'Could not initialize file logging:', error.message );
-	}
-
-	[ 'log', 'info', 'warn', 'error' ].forEach( ( method ) => {
-		console[ method ] = ( ...args ) => {
-			appendMainLog( method, args );
-			originalConsole[ method ]( ...args );
-		};
-	} );
-
-	process.on( 'uncaughtException', ( error ) => {
-		appendMainLog( 'error', [ 'Uncaught exception', error ] );
-	} );
-
-	process.on( 'unhandledRejection', ( reason ) => {
-		appendMainLog( 'error', [ 'Unhandled rejection', reason ] );
-	} );
-}
-
 // Get the current file name
 const thisFileName = fileURLToPath( import.meta.url );
 // Get the name of the directory
 const thisDirName = path.dirname( thisFileName );
 // The path to the root of the project: two levels up from the current directory
 const projectRoot = path.resolve( thisDirName, "../../" );
+// Load project-level environment variables for the main process.
+dotenv.config( {
+	path: path.join( projectRoot, '.env' )
+} );
 // Environment detection
 const isDevelopment = process.env.NODE_ENV === 'development';
 const enableDevTools = isDevelopment || parseBoolean( process.env.BOXLANG_DEVTOOLS ) === true;
@@ -120,7 +60,8 @@ let boxLang;
  * --------------------------------------------------------
  *  You can change these settings to customize the app as you see fit.
  */
-const APP_DIRECTORY_NAME = "coldbox-starter-desktop"
+const APP_NAME = "BoxLang Starter Desktop"
+const APP_DIRECTORY_NAME = "boxlang-starter-desktop"
 const APP_SERVER_PORT = process.env.BOXLANG_PORT ? parseNumber( process.env.BOXLANG_PORT ) : 59700
 const APP_HOME = process.env.BOXLANG_HOME
 	? path.resolve( process.env.BOXLANG_HOME )
@@ -128,11 +69,11 @@ const APP_HOME = process.env.BOXLANG_HOME
 const APP_HOME_SOURCE = process.env.BOXLANG_HOME ? 'env BOXLANG_HOME' : 'default user home'
 
 if( isDevelopment ) {
-	console.log( '[ColdBox] Running in development mode' );
-	console.log( '[ColdBox] App home (' + APP_HOME_SOURCE + '): ' + APP_HOME )
+	console.log( `[${APP_NAME}] Running in development mode` );
+	console.log( `[${APP_NAME}] App home (${APP_HOME_SOURCE}): ${APP_HOME}` );
 }
 if ( enableDevTools && !isDevelopment ) {
-	console.log( '[ColdBox] DevTools enabled via BOXLANG_DEVTOOLS' );
+	console.log( `[${APP_NAME}] DevTools enabled via BOXLANG_DEVTOOLS` );
 }
 
 const globalSettings = {
@@ -150,7 +91,7 @@ const globalSettings = {
 	// The server origin URL (used for API calls, etc.)
     serverOrigin: `http://localhost:${APP_SERVER_PORT}`,
 	// Window Defaults
-    appName: "ColdBox Starter Desktop",
+    appName: APP_NAME,
     windowHeight: 1024,
     windowWidth: 1300,
     // Project paths
@@ -162,7 +103,7 @@ const globalSettings = {
 };
 
 setupMainProcessLogging();
-console.log( '[ColdBox] Main process log file:', mainLogFilePath || 'not available' );
+console.log( `[${APP_NAME}] Main process log file:`, mainLogFilePath || 'not available' );
 
 // Set app name early (before app is ready)
 app.setName( globalSettings.appName );
@@ -195,6 +136,60 @@ process.on( 'SIGTERM', () => { boxLang.stop(); app.quit(); } );
  * Create the main application window once Electron is ready
  */
 app.whenReady().then( () => {
+	ipcMain.handle( "boxlang-starter:pick-path", async ( _event, options = {} ) => {
+		const properties = options.mode === "directory"
+			? [ "openDirectory", "dontAddToRecent" ]
+			: [ "openFile", "dontAddToRecent" ]
+
+		const result = await dialog.showOpenDialog( mainWindow, {
+			title: options.title || "Choose a path",
+			properties,
+			filters: options.filters || undefined
+		} )
+
+		return {
+			canceled: result.canceled,
+			path: result.filePaths?.[ 0 ] || ""
+		}
+	} )
+
+	ipcMain.handle( "boxlang-starter:open-path", async ( _event, { path } = {} ) => {
+		if ( !path ) {
+			return { success: false, error: "No path provided" }
+		}
+
+		try {
+			await shell.openPath( path )
+			return { success: true }
+		} catch ( error ) {
+			return { success: false, error: error.message }
+		}
+	} )
+
+	ipcMain.handle( "boxlang-starter:open-external", async ( _event, { url } = {} ) => {
+		if ( !url ) {
+			return { success: false, error: "No URL provided" }
+		}
+
+		let parsedUrl
+		try {
+			parsedUrl = new URL( url )
+		} catch {
+			return { success: false, error: "Invalid URL provided" }
+		}
+
+		if ( ![ "http:", "https:" ].includes( parsedUrl.protocol ) ) {
+			return { success: false, error: "Only HTTP/HTTPS URLs are allowed" }
+		}
+
+		try {
+			await shell.openExternal( parsedUrl.toString() )
+			return { success: true }
+		} catch ( error ) {
+			return { success: false, error: error.message }
+		}
+	} )
+
 	// Ensure app name is set (sometimes needed for development)
 	app.setName( globalSettings.appName );
 
@@ -213,10 +208,16 @@ app.whenReady().then( () => {
 		showOrCreateWindow: showOrCreateWindow,
 		reloadWindow: reloadWindow,
 		forceReloadWindow: forceReloadWindow,
+		quit: handleQuit,
+		showOrCreateWindow: showOrCreateWindow,
+		reloadWindow: reloadWindow,
+		forceReloadWindow: forceReloadWindow,
 		restartBoxLang: () => boxLang.restart(),
 		closeWindow: closeWindow,
 		toggleDevTools: toggleDevTools,
-		showAbout: showAboutDialog
+		showAbout: showAboutDialog,
+		openLogsFolder: openLogsFolder,
+		copyStartupDiagnostics: copyStartupDiagnostics
 	} );
 
 	// Create the main application window
@@ -388,8 +389,50 @@ function showAboutDialog () {
 }
 
 /**
- * Create the main application window
- */
+	 * Open the app logs directory in the operating system file explorer.
+	 */
+	function openLogsFolder () {
+		try {
+			const logsDir = app.getPath( 'logs' );
+			shell.openPath( logsDir );
+		} catch ( error ) {
+			dialog.showErrorBox(
+				'Open Logs Folder Failed',
+				`Could not open logs folder: ${error.message}`
+			);
+		}
+	}
+
+	/**
+	 * Copy startup diagnostics to clipboard to simplify support requests.
+	 */
+	function copyStartupDiagnostics () {
+		const diagnostics = [
+			`Timestamp: ${new Date().toISOString()}`,
+			`App: ${globalSettings.appName}`,
+			`Version: ${app.getVersion()}`,
+			`Platform: ${process.platform} ${process.arch}`,
+			`Node: ${process.versions.node}`,
+			`Electron: ${process.versions.electron}`,
+			`Server Origin: ${globalSettings.serverOrigin}`,
+			`Server Port: ${globalSettings.serverPort}`,
+			`Debug Mode: ${globalSettings.serverDebugMode ? 'Enabled' : 'Disabled'}`,
+			`App Home: ${globalSettings.appHome}`
+		].join( '\n' );
+
+		clipboard.writeText( diagnostics );
+		dialog.showMessageBox( mainWindow, {
+			type: 'info',
+			title: 'Diagnostics Copied',
+			message: 'Startup diagnostics were copied to the clipboard.',
+			detail: diagnostics,
+			buttons: [ 'OK' ]
+		} );
+	}
+
+	/**
+	 * Create the main application window
+	 */
 function createWindow () {
     mainWindow = new BrowserWindow( {
         width: globalSettings.windowWidth,
@@ -405,6 +448,7 @@ function createWindow () {
             nodeIntegration: false,
             contextIsolation: true,
             enableRemoteModule: false,
+			preload: path.join( thisDirName, "preload.js" ),
 			devTools: enableDevTools
         }
     } );
@@ -476,7 +520,7 @@ function createWindow () {
  * @param {string} routePath - The path to the route (e.g., "/api/status")
  * @returns {string} - The full URL to the route (e.g., "http://localhost:59700/api/status")
  */
-function buildLink ( routePath ) {
+function buildLink( routePath ) {
 	return `${globalSettings.serverOrigin}${routePath}`;
 }
 
@@ -487,7 +531,7 @@ function buildLink ( routePath ) {
  *
  * @returns {string} The resolved path
  */
-function resolveAsset ( ...p ) {
+function resolveAsset( ...p ) {
   return globalSettings.path.join( globalSettings.projectRoot, ...p );
 }
 
@@ -497,7 +541,7 @@ function resolveAsset ( ...p ) {
  *
  * @returns {boolean|undefined} - The parsed boolean, or undefined if it cannot be parsed
  */
-function parseBoolean ( value ) {
+function parseBoolean( value ) {
     if ( value == null ) {
         return undefined;
     }
@@ -521,11 +565,102 @@ function parseBoolean ( value ) {
  *
  * @returns {number|undefined} - The parsed number, or undefined if it cannot be parsed
  */
-function parseNumber ( value ) {
+function parseNumber( value ) {
     if ( value == null || value === '' ) {
         return undefined;
     }
 
     const parsed = Number( value );
     return Number.isFinite( parsed ) ? parsed : undefined;
+}
+
+/**
+ * Serialize log arguments into a string for logging.
+ *
+ * @param {Array} args - The arguments to serialize
+ *
+ * @returns {string} - The serialized log arguments
+ */
+function serializeLogArgs( args ) {
+	return args.map( ( arg ) => {
+		if ( arg instanceof Error ) {
+			return `${arg.message}\n${arg.stack || ''}`;
+		}
+
+		if ( typeof arg === 'object' ) {
+			try {
+				return JSON.stringify( arg );
+			} catch {
+				return String( arg );
+			}
+		}
+
+		return String( arg );
+	} ).join( ' ' );
+}
+
+/**
+ * Append a log entry to the main log file with a timestamp and log level.
+ *
+ * @param {string} level - The log level (e.g., 'log', 'info', 'warn', 'error')
+ * @param {Array} args - The arguments to log
+ */
+function appendMainLog( level, args ) {
+	if ( !mainLogFilePath ) {
+		return;
+	}
+
+	try {
+		const line = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${serializeLogArgs( args )}\n`;
+		appendFileSync( mainLogFilePath, line, 'utf8' );
+	} catch {
+		// Ignore file logging failures to avoid breaking startup.
+	}
+}
+
+/**
+ * Setup logging for the main process to write to a file in the user's logs directory.
+ * This will capture all console output and uncaught exceptions/rejections.
+ */
+function setupMainProcessLogging() {
+	// Keep a reference to the original console methods so we can still log to the console while also writing to the file.
+	const originalConsole = {
+		log: console.log.bind( console ),
+		info: console.info.bind( console ),
+		warn: console.warn.bind( console ),
+		error: console.error.bind( console )
+	};
+
+	try {
+		// Set the app logs path and ensure the directory exists
+		app.setAppLogsPath();
+		// Use the logs directory provided by Electron, which is platform-appropriate
+		const logsDir = app.getPath( 'logs' );
+		// Ensure the logs directory exists
+		mkdirSync( logsDir, { recursive: true } );
+		// Set the main log file path
+		mainLogFilePath = path.join( logsDir, 'main.log' );
+		// Log the startup message
+		appendMainLog( 'log', [ `==== App startup (pid ${process.pid}) ====` ] );
+	} catch ( error ) {
+		originalConsole.warn( 'Could not initialize file logging:', error.message );
+	}
+
+	// Override console methods to also write to the log file
+	[ 'log', 'info', 'warn', 'error' ].forEach( ( method ) => {
+		console[ method ] = ( ...args ) => {
+			appendMainLog( method, args );
+			originalConsole[ method ]( ...args );
+		};
+	} );
+
+	// Capture uncaught exceptions and unhandled promise rejections
+	process.on( 'uncaughtException', ( error ) => {
+		appendMainLog( 'error', [ 'Uncaught exception', error ] );
+	} );
+
+	// Capture unhandled promise rejections
+	process.on( 'unhandledRejection', ( reason ) => {
+		appendMainLog( 'error', [ 'Unhandled rejection', reason ] );
+	} );
 }

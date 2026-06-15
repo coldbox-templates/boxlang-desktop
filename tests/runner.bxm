@@ -26,6 +26,11 @@
 <!--- Enable batched code coverage reporter, useful for large test bundles which require spreading over multiple testbox run commands. --->
 <!--- <bx:param name="url.isBatched"						default="false"> --->
 
+<!--- Ensure correct charset for text reporter so browsers don't mangle UTF-8 symbols --->
+<bx:if url.reporter EQ "text">
+	<bx:header name="Content-Type" value="text/plain; charset=UTF-8">
+</bx:if>
+
 <!--- Include the appropriate runner based on streaming mode --->
 <bx:if url.streaming && !url.dryRun>
 	<!--- Stream results in real-time via SSE --->
