@@ -26,6 +26,9 @@
 			"external": false
 		},
 		"/public": "${user-dir}/public",
+		"/coldbox" :  {"path": "${user-dir}/lib/coldbox", "external": false },
+		"/coldbox/system/exceptions" :  {"path": "${user-dir}/lib/coldbox/system/exceptions", "external": true },
+		"/modules" :  {"path": "${user-dir}/lib/modules", "external": true },
 		"/testbox": "${user-dir}/lib/testbox",
 		"/tests": "${user-dir}/tests"
 	},

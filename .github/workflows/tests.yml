@@ -34,7 +34,7 @@ jobs:
 
       - name: Start ${{ matrix.cfengine }} Server
         run: |
-          boxlang-miniserver miniserver.json &
+          boxlang-miniserver miniserver.json -p 59700 &
           echo "Waiting for server to be ready..."
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:59700/healthcheck && break
@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload Test Results to Artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.cfengine }}
           path: |
